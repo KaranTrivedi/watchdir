@@ -5,18 +5,16 @@ Script to monitor a folder, send an email if changes detected.
 """
 
 import configparser
-import json
 import logging
-import sys
-import time
 import os
+import smtplib
+import ssl
 import subprocess
-
-from pathlib import Path
-import smtplib, ssl
+import time
 from email.mime.text import MIMEText
+from pathlib import Path
 
-from watchdog.events import LoggingEventHandler, PatternMatchingEventHandler
+from watchdog.events import PatternMatchingEventHandler
 from watchdog.observers import Observer
 
 #Define config and logger.
@@ -30,9 +28,12 @@ MAILER = CONFIG['mailer']
 logger = logging.getLogger(SECTION)
 
 def mailer(subject, body):
+    """
+    Accepts subject and body for sending an email.
+    """
 
-    Message = f"{subject}\n\n{body}"
-    msg = MIMEText(Message)
+    message = f"{subject}\n\n{body}"
+    msg = MIMEText(message)
 
 
     msg["From"] = MAILER['from']
@@ -51,6 +52,9 @@ def mailer(subject, body):
 
 
 def unrar():
+    """
+    Run command in directory where change is detected.
+    """
 
     logger.info(f"Unraring.")
 
@@ -71,6 +75,12 @@ def unrar():
     logger.error(error.decode().strip())
 
 def on_created(event):
+    """
+    This function will be called on detection of changes to monitored folder with event data.
+    """
+
+    logger.info(event)
+    logger.info(type(event))
 
     path = event.src_path
 
@@ -102,7 +112,11 @@ def main():
     ignore_directories = False
     case_sensitive = True
 
-    event_handler = PatternMatchingEventHandler(patterns, ignore_patterns, ignore_directories, case_sensitive)
+    event_handler = PatternMatchingEventHandler(patterns,
+                                                ignore_patterns,
+                                                ignore_directories,
+                                                case_sensitive
+                                                )
     event_handler.on_created = on_created
 
     #event_handler = LoggingEventHandler()
@@ -119,4 +133,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
