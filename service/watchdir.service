@@ -1,0 +1,37 @@
+[Unit]
+Description=Service
+#After=multi-user.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/karan/projects/watchdir
+ExecStart=/home/karan/projects/watchdir/venv/bin/python /home/karan/projects/watchdir/watchdir.py
+ExecReload=/bin/kill -HUP $MAINPID
+User=debian-transmission
+Group=debian-transmission
+
+[Install]
+WantedBy=multi-user.target
+
+# Optional settings to allow your script to auto restart incase of failure.
+# Restart=always
+# TimeoutStartSec=10
+# RestartSec=10
+
+# Copy this file from the service folder using these commands
+# Edit the file here for future uses, and use issue the command to override the existing file.
+# sudo cp /home/karan/projects/watchdir/service/watchdir.service /lib/systemd/system/
+
+# sudo systemctl daemon-reload
+# sudo sysmtemctl restart watchdir.service
+# Use above commands to reload and restart service.
+
+# Issue this command once to make your script wake up and run on startup.
+# sudo sysmtemctl enable watchdir.service
+
+# Commands for starting, stopping, restarting and checking status of your script.
+# sudo sysmtemctl start watchdir.service
+# sudo sysmtemctl stop watchdir.service
+# sudo sysmtemctl restart watchdir.service
+# sudo sysmtemctl status watchdir.service
+
