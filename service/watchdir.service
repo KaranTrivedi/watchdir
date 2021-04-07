@@ -7,8 +7,8 @@ Type=simple
 WorkingDirectory=/home/karan/projects/watchdir
 ExecStart=/home/karan/projects/watchdir/venv/bin/python /home/karan/projects/watchdir/watchdir.py
 ExecReload=/bin/kill -HUP $MAINPID
-User=debian-transmission
-Group=debian-transmission
+User=karan
+Group=karan
 
 [Install]
 WantedBy=multi-user.target

@@ -4,6 +4,7 @@
 Script to monitor a folder, send an email if changes detected.
 """
 
+import base64
 import configparser
 import logging
 import os
@@ -17,6 +18,8 @@ from pathlib import Path
 from watchdog.events import PatternMatchingEventHandler
 from watchdog.observers import Observer
 
+from libs import mailer_calls
+
 #Define config and logger.
 CONFIG = configparser.ConfigParser()
 CONFIG.read("conf/config.ini")
@@ -27,36 +30,12 @@ MAILER = CONFIG['mailer']
 
 logger = logging.getLogger(SECTION)
 
-def mailer(subject, body):
-    """
-    Accepts subject and body for sending an email.
-    """
-
-    message = f"{subject}\n\n{body}"
-    msg = MIMEText(message)
-
-
-    msg["From"] = MAILER['from']
-    msg["To"] = MAILER['to']
-
-    # Create a secure SSL context
-    context = ssl.create_default_context()
-
-    with smtplib.SMTP_SSL(MAILER['server'], MAILER['port'], context=context) as server:
-        server.login(MAILER['from'], MAILER['passw'])
-
-        try:
-            server.send_message(msg, MAILER['from'], MAILER['to'])
-        except Exception as exp:
-            logger.exception(exp)
-
-
 def unrar():
     """
     Run command in directory where change is detected.
     """
 
-    logger.info(f"Unraring.")
+    logger.info("Unraring.")
 
     ff_command = [
         "unrar",
@@ -85,15 +64,18 @@ def on_created(event):
     path = event.src_path
 
     subject = Path(path).name
-    body = os.listdir(path)
-
-    mailer(subject=subject, body=body)
 
     if os.path.isdir(path):
+        body = "\n".join(os.listdir(path))
+        body += "\n" + f"http://192.168.0.16:4201/directory/downloads/{subject}?sort=desc&column=modify_time&query="
         logger.info(f"{path} created")
         os.chdir(path)
         unrar()
         logger.info("done")
+    else:
+        body = ""
+
+    mailer_calls.mailer(subject=subject, body=body)
 
 def main():
     """
@@ -105,7 +87,7 @@ def main():
                     format='%(asctime)s::%(name)s::%(funcName)s::%(levelname)s::%(message)s',\
                     datefmt="%Y-%m-%dT%H:%M:%S%z")
 
-    logger.info("############# STARTING ##############")
+    logger.info("############# Starting watcher ##############")
 
     patterns = "*"
     ignore_patterns = ""
@@ -124,6 +106,7 @@ def main():
     observer = Observer()
     observer.schedule(event_handler, PATH)
     observer.start()
+
     try:
         while True:
             time.sleep(1)
